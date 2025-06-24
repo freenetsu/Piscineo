@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id              String    @id @default(cuid())
+  name            String?
+  email           String?   @unique
+  emailVerified   DateTime?
+  image           String?
+  companyName     String?   // Nom de l'entreprise du pisciniste
+  phone           String?   // Numéro de téléphone professionnel
+  role            Role      @default(PRO)
+  subscriptionPlan SubscriptionPlan @default(FREE)
+  activeUntil     DateTime? // Date de fin d'abonnement
+  accounts        Account[]
+  sessions        Session[]
+  clients         Client[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Client {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id])
+  firstName     String
+  lastName      String
+  email         String?
+  phone         String?    // Numéro de téléphone du client
+  address       String     // Adresse obligatoire pour les interventions
+  accessCode    String?    // Code d'accès à la propriété si nécessaire
+  poolDetails   Json?      // Détails techniques de la piscine (type, taille, équipements)
+  notes         String?    // Notes générales sur le client
+  active        Boolean    @default(true)  // Pour gérer les clients actifs/inactifs
+  interventions Intervention[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Intervention {
+  id          String    @id @default(cuid())
+  clientId    String
+  client      Client    @relation(fields: [clientId], references: [id])
+  description String
+  checklist   Json      // Liste des tâches effectuées
+  parameters  Json?     // Paramètres mesurés (pH, chlore, etc.)
+  products    Json?     // Produits utilisés et quantités
+  photos      Json?     // URLs des photos stockées en JSON
+  signature   String?   // URL de la signature du client
+  date        DateTime  @default(now()) // Date de l'intervention
+  nextVisit   DateTime? // Date prévue pour la prochaine visite
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum Role {
+  ADMIN
+  PRO
+}
+
+enum SubscriptionPlan {
+  FREE    // Limité à 5 clients
+  BASIC   // Jusqu'à 20 clients
+  PRO     // Clients illimités + fonctionnalités avancées
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
