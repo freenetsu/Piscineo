@@ -1,24 +1,86 @@
 "use client";
-import React from "react";
 import { useModal } from "../../hooks/useModal";
-import { Modal } from "../ui/modal";
-import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
+import Button from "../ui/button/Button";
+import { Modal } from "../ui/modal";
+import { useSession } from "next-auth/react";
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 
 export default function UserAddressCard() {
   const { isOpen, openModal, closeModal } = useModal();
-  const handleSave = () => {
-    // Handle save logic here
-    console.log("Saving changes...");
-    closeModal();
+  const { data: session } = useSession();
+  const [formData, setFormData] = useState({
+    country: "",
+    city: "",
+    postalCode: ""
+  });
+
+  // Charger les données de l'utilisateur
+  const loadUserData = useCallback(async () => {
+    if (!session?.user?.email) return;
+
+    try {
+      const response = await fetch(`/api/users/${session.user.email}`);
+      const data = await response.json();
+      
+      setFormData({
+        country: data.country || "",
+        city: data.city || "",
+        postalCode: data.postalCode || ""
+      });
+    } catch (error) {
+      console.error("Error loading user data:", error);
+      toast.error("Erreur lors du chargement des données");
+    }
+  }, [session?.user?.email]);
+
+  // Sauvegarder les modifications
+  const handleSave = async () => {
+    if (!session?.user?.email) return;
+
+    try {
+      const response = await fetch(`/api/users/${session.user.email}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        toast.success("Adresse mise à jour avec succès");
+        closeModal();
+        loadUserData(); // Recharger les données
+      } else {
+        throw new Error("Failed to update address");
+      }
+    } catch (error) {
+      console.error("Error saving address:", error);
+      toast.error("Erreur lors de la sauvegarde de l'adresse");
+    }
   };
+
+  // Gérer les changements de champs
+  const handleChange = (field: keyof typeof formData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: e.target.value
+    }));
+  };
+
+  // Charger les données au montage du composant
+  useEffect(() => {
+    loadUserData();
+  }, [session?.user?.email, loadUserData]);
+
   return (
     <>
-      <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
+      <div className="rounded-2xl border border-gray-200 p-5 lg:p-6 dark:border-gray-800">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
+            <h4 className="text-lg font-semibold text-gray-800 lg:mb-6 dark:text-white/90">
               Address
             </h4>
 
@@ -28,7 +90,7 @@ export default function UserAddressCard() {
                   Country
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  United States
+                  {formData.country || "Non spécifié"}
                 </p>
               </div>
 
@@ -37,7 +99,7 @@ export default function UserAddressCard() {
                   City/State
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  Phoenix, Arizona, United States.
+                  {formData.city || "Non spécifié"}
                 </p>
               </div>
 
@@ -46,16 +108,7 @@ export default function UserAddressCard() {
                   Postal Code
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  ERT 2489
-                </p>
-              </div>
-
-              <div>
-                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                  TAX ID
-                </p>
-                <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  AS4568384
+                  {formData.postalCode || "Non spécifié"}
                 </p>
               </div>
             </div>
@@ -63,7 +116,7 @@ export default function UserAddressCard() {
 
           <button
             onClick={openModal}
-            className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 lg:inline-flex lg:w-auto"
+            className="shadow-theme-xs flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-800 lg:inline-flex lg:w-auto dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
           >
             <svg
               className="fill-current"
@@ -84,41 +137,48 @@ export default function UserAddressCard() {
           </button>
         </div>
       </div>
-      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">
-        <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-11">
+      <Modal isOpen={isOpen} onClose={closeModal} className="m-4 max-w-[700px]">
+        <div className="no-scrollbar relative w-full overflow-y-auto rounded-3xl bg-white p-4 lg:p-11 dark:bg-gray-900">
           <div className="px-2 pr-14">
             <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
               Edit Address
             </h4>
-            <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
+            <p className="mb-6 text-sm text-gray-500 lg:mb-7 dark:text-gray-400">
               Update your details to keep your profile up-to-date.
             </p>
           </div>
           <form className="flex flex-col">
-            <div className="px-2 overflow-y-auto custom-scrollbar">
+            <div className="custom-scrollbar overflow-y-auto px-2">
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                 <div>
                   <Label>Country</Label>
-                  <Input type="text" defaultValue="United States" />
+                  <Input 
+                    type="text" 
+                    value={formData.country} 
+                    onChange={handleChange("country")} 
+                  />
                 </div>
 
                 <div>
                   <Label>City/State</Label>
-                  <Input type="text" defaultValue="Arizona, United States." />
+                  <Input 
+                    type="text" 
+                    value={formData.city} 
+                    onChange={handleChange("city")} 
+                  />
                 </div>
 
                 <div>
                   <Label>Postal Code</Label>
-                  <Input type="text" defaultValue="ERT 2489" />
-                </div>
-
-                <div>
-                  <Label>TAX ID</Label>
-                  <Input type="text" defaultValue="AS4568384" />
+                  <Input 
+                    type="text" 
+                    value={formData.postalCode} 
+                    onChange={handleChange("postalCode")} 
+                  />
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
+            <div className="mt-6 flex items-center gap-3 px-2 lg:justify-end">
               <Button size="sm" variant="outline" onClick={closeModal}>
                 Close
               </Button>

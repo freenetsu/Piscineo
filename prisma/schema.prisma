@@ -42,9 +42,14 @@ model User {
   image           String?
   companyName     String?   // Nom de l'entreprise du pisciniste
   phone           String?   // Numéro de téléphone professionnel
+  country         String?   // Pays de l'entreprise
+  city            String?   // Ville de l'entreprise
+  postalCode      String?   // Code postal de l'entreprise
   role            Role      @default(PRO)
   subscriptionPlan SubscriptionPlan @default(FREE)
   activeUntil     DateTime? // Date de fin d'abonnement
+  facebook        String?   // Lien du profil Facebook
+  instagram       String?   // Lien du profil Instagram
   accounts        Account[]
   sessions        Session[]
   clients         Client[]
