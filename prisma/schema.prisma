@@ -66,7 +66,13 @@ model Client {
   email         String?
   phone         String?    // Numéro de téléphone du client
   address       String     // Adresse obligatoire pour les interventions
+  addressComment String?   // Commentaire sur l'adresse (accès, particularités, etc.)
   accessCode    String?    // Code d'accès à la propriété si nécessaire
+  poolState     String?    // État actuel de la piscine (bon état, nécessite entretien, etc.)
+  poolType      String?    // Type de piscine (enterrée, hors-sol, etc.)
+  poolSize      String?    // Dimensions de la piscine
+  lastService   DateTime?  // Date de la dernière intervention
+  serviceFrequency String? // Fréquence d'entretien souhaitée (hebdomadaire, mensuel, etc.)
   poolDetails   Json?      // Détails techniques de la piscine (type, taille, équipements)
   notes         String?    // Notes générales sur le client
   active        Boolean    @default(true)  // Pour gérer les clients actifs/inactifs
