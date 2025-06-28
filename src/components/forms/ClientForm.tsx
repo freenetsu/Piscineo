@@ -1,21 +1,23 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { useModal } from "../../hooks/useModal";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import Button from "../ui/button/Button";
 import { Modal } from "../ui/modal";
-import { useModal } from "../../hooks/useModal";
-import { Textarea } from "@/components/ui/textarea";
-
 
 interface ClientFormProps {
   clientId?: string;
   isEditing?: boolean;
 }
 
-export default function ClientForm({ clientId, isEditing = false }: ClientFormProps) {
+export default function ClientForm({
+  clientId,
+  isEditing = false,
+}: ClientFormProps) {
   const { isOpen, openModal, closeModal } = useModal();
   const { data: session } = useSession();
   const router = useRouter();
@@ -35,7 +37,7 @@ export default function ClientForm({ clientId, isEditing = false }: ClientFormPr
     serviceFrequency: "",
     notes: "",
   });
-  
+
   // Récupérer les données du client si on est en mode édition
   useEffect(() => {
     if (isEditing && clientId && isOpen) {
@@ -68,12 +70,14 @@ export default function ClientForm({ clientId, isEditing = false }: ClientFormPr
           setIsLoading(false);
         }
       };
-      
+
       fetchClientData();
     }
   }, [clientId, isEditing, isOpen]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -83,7 +87,7 @@ export default function ClientForm({ clientId, isEditing = false }: ClientFormPr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!session?.user?.id) {
       console.error("Utilisateur non connecté");
       return;
@@ -91,7 +95,7 @@ export default function ClientForm({ clientId, isEditing = false }: ClientFormPr
 
     try {
       let response;
-      
+
       if (isEditing && clientId) {
         // Mise à jour d'un client existant
         response = await fetch(`/api/clients/${clientId}`, {
@@ -120,19 +124,25 @@ export default function ClientForm({ clientId, isEditing = false }: ClientFormPr
         router.refresh(); // Rafraîchir la page pour afficher le client créé/modifié
       } else {
         const error = await response.json();
-        console.error(`Erreur lors de ${isEditing ? "la modification" : "la création"} du client:`, error);
+        console.error(
+          `Erreur lors de ${isEditing ? "la modification" : "la création"} du client:`,
+          error,
+        );
       }
     } catch (error) {
-      console.error(`Erreur lors de ${isEditing ? "la modification" : "la création"} du client:`, error);
+      console.error(
+        `Erreur lors de ${isEditing ? "la modification" : "la création"} du client:`,
+        error,
+      );
     }
   };
 
   return (
     <>
       {isEditing ? (
-        <button 
-          onClick={openModal} 
-          className="text-blue-600 text-sm hover:text-blue-800 font-medium"
+        <button
+          onClick={openModal}
+          className="text-sm font-medium text-blue-600 hover:text-blue-800"
         >
           Modifier
         </button>
@@ -143,13 +153,13 @@ export default function ClientForm({ clientId, isEditing = false }: ClientFormPr
       )}
 
       <Modal isOpen={isOpen} onClose={closeModal} className="m-4 max-w-[500px]">
-        <div className="relative w-full max-w-[500px] max-h-[80vh] overflow-y-auto rounded-3xl bg-white p-4 lg:p-6 dark:bg-gray-900">
+        <div className="relative max-h-[80vh] w-full max-w-[500px] overflow-y-auto rounded-3xl bg-white p-4 lg:p-6 dark:bg-gray-900">
           <div className="px-2 pr-8">
             <h4 className="mb-1 text-xl font-semibold text-gray-800 dark:text-white/90">
               {isEditing ? "Modifier le client" : "Ajouter un nouveau client"}
             </h4>
             <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-              {isEditing 
+              {isEditing
                 ? "Modifiez les informations du client."
                 : "Remplissez les informations pour créer un nouveau client."}
             </p>
@@ -319,7 +329,11 @@ export default function ClientForm({ clientId, isEditing = false }: ClientFormPr
                 Annuler
               </Button>
               <Button size="sm" type="submit" disabled={isLoading}>
-                {isLoading ? "Chargement..." : isEditing ? "Enregistrer" : "Créer le client"}
+                {isLoading
+                  ? "Chargement..."
+                  : isEditing
+                    ? "Enregistrer"
+                    : "Créer le client"}
               </Button>
             </div>
           </form>

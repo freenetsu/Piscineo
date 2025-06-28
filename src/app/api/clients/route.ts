@@ -65,7 +65,7 @@ export async function POST(request: Request) {
 }
 
 // GET /api/clients - Récupérer tous les clients de l'utilisateur connecté
-export async function GET() {
+export async function GET(request: Request) {
   try {
     // Vérifier l'authentification
     const session = await getServerSession(authOptions);
@@ -76,10 +76,15 @@ export async function GET() {
       );
     }
 
+    // Vérifier si on ne veut que les clients actifs
+    const { searchParams } = new URL(request.url);
+    const activeOnly = searchParams.get('activeOnly') === 'true';
+    
     // Récupérer les clients de l'utilisateur
     const clients = await prisma.client.findMany({
       where: {
         userId: session.user.id,
+        ...(activeOnly ? { active: true } : {}), // Filtre sur active: true si activeOnly est vrai
       },
       orderBy: {
         createdAt: "desc",

@@ -10,6 +10,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import ClientsTableRow from "./ClientsTableRow";
+import ClientsTableHeader from "./ClientsTableHeader";
 
 // Type pour les clients
 
@@ -44,6 +45,7 @@ export default async function ClientsTable() {
   const clients = await getClientsForCurrentUser();
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+      <ClientsTableHeader />
       <div className="max-w-full overflow-x-auto">
         <div className="min-w-[1102px]">
           <Table>

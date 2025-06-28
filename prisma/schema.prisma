@@ -90,9 +90,10 @@ model Intervention {
   parameters  Json?     // Paramètres mesurés (pH, chlore, etc.)
   products    Json?     // Produits utilisés et quantités
   photos      Json?     // URLs des photos stockées en JSON
-  signature   String?   // URL de la signature du client
+  signature   String?   // URL de la signature du prestataire
   date        DateTime  @default(now()) // Date de l'intervention
   nextVisit   DateTime? // Date prévue pour la prochaine visite
+  notes       String?   // Notes supplémentaires sur l'intervention
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }

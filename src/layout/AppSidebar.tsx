@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSidebar } from "../context/SidebarContext";
+import { ClipboardCheck } from "lucide-react";
 import {
   BoxCubeIcon,
   CalenderIcon,
@@ -46,6 +47,11 @@ const navItems: NavItem[] = [
     icon: <GroupIcon />,
     name: "Clients",
     subItems: [{ name: "Liste des clients", path: "/clients", pro: false }],
+  },
+  {
+    icon: <ClipboardCheck size={20} />,
+    name: "Interventions",
+    subItems: [{ name: "Liste des interventions", path: "/interventions", pro: false }],
   },
   {
     name: "Forms",
