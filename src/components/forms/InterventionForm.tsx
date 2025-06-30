@@ -11,6 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "lucide-react";
 import PhotoUpload from "../form/PhotoUpload";
 import SignatureCanvas from "../form/SignatureCanvas";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import ProgressBar from "../ui/progress/ProgressBar";
 
 interface InterventionFormProps {
   interventionId?: string;
@@ -41,6 +44,9 @@ export default function InterventionForm({ interventionId, isEditing = false, on
     checklist: JSON.stringify([]), // Initialiser avec un tableau vide pour le checklist obligatoire
   });
   
+  // État pour la date de prochaine visite avec DatePicker
+  const [nextVisitDate, setNextVisitDate] = useState<Date | null>(null);
+  
   // État pour l'option d'envoi automatique du PDF par email
   const [sendPdfToClient, setSendPdfToClient] = useState(false);
   
@@ -49,6 +55,22 @@ export default function InterventionForm({ interventionId, isEditing = false, on
   
   // État pour stocker la signature en base64
   const [signature, setSignature] = useState<string | null>(null);
+  
+  // Fonction pour réinitialiser complètement le formulaire
+  const resetForm = () => {
+    setFormData({
+      clientId: "",
+      description: "",
+      date: new Date().toISOString().split('T')[0], // Format YYYY-MM-DD pour aujourd'hui
+      nextVisit: "",
+      notes: "",
+      checklist: JSON.stringify([]), // Réinitialiser avec un tableau vide pour le checklist obligatoire
+    });
+    setNextVisitDate(null);
+    setSendPdfToClient(false);
+    setPhotos([]);
+    setSignature(null);
+  };
   
   // Récupérer les clients de l'utilisateur connecté
   useEffect(() => {
@@ -96,6 +118,11 @@ export default function InterventionForm({ interventionId, isEditing = false, on
               checklist: data.checklist || JSON.stringify([]),
             });
             
+            // Initialiser également nextVisitDate si la date existe
+            if (data.nextVisit) {
+              setNextVisitDate(new Date(data.nextVisit));
+            }
+            
             // Charger les photos si elles existent
             if (data.photos) {
               try {
@@ -132,6 +159,24 @@ export default function InterventionForm({ interventionId, isEditing = false, on
       setFormData((prev) => ({
         ...prev,
         [name]: value,
+      }));
+    }
+  };
+  
+  // Fonction pour gérer la sélection de date avec le DatePicker
+  const handleNextVisitChange = (date: Date | null) => {
+    setNextVisitDate(date);
+    
+    // Mettre à jour le formData avec la nouvelle date au format YYYY-MM-DD
+    if (date) {
+      setFormData((prev) => ({
+        ...prev,
+        nextVisit: date.toISOString().split('T')[0],
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        nextVisit: "",
       }));
     }
   };
@@ -196,6 +241,9 @@ export default function InterventionForm({ interventionId, isEditing = false, on
             alert(`Erreur lors de l'envoi du PDF: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
           }
         }
+        
+        // Réinitialiser le formulaire après une validation réussie
+        resetForm();
         
         closeModal();
         if (onSuccess) onSuccess();
@@ -295,13 +343,18 @@ export default function InterventionForm({ interventionId, isEditing = false, on
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Prochaine visite (optionnel)</Label>
                     <div className="relative">
-                      <Input
-                        type="date"
-                        name="nextVisit"
-                        value={formData.nextVisit}
-                        onChange={handleChange}
+                      <DatePicker
+                        selected={nextVisitDate}
+                        onChange={handleNextVisitChange}
+                        dateFormat="dd/MM/yyyy"
+                        placeholderText="Sélectionner une date"
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                        isClearable
+                        showMonthDropdown
+                        showYearDropdown
+                        dropdownMode="select"
                       />
-                      <Calendar className="absolute right-3 top-2.5 h-4 w-4 text-gray-500" />
+                      <Calendar className="absolute right-3 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
                     </div>
                   </div>
 
@@ -359,8 +412,18 @@ export default function InterventionForm({ interventionId, isEditing = false, on
               </div>
             </div>
 
+            {/* Barre de progression */}
+            {isLoading && (
+              <div className="px-2 mb-2">
+                <ProgressBar isLoading={isLoading} duration={8000} />
+                <p className="text-xs text-center text-gray-500 mt-1">
+                  {sendPdfToClient ? "Génération du PDF et envoi de l'email en cours..." : "Enregistrement de l'intervention en cours..."}
+                </p>
+              </div>
+            )}
+            
             <div className="mt-4 flex items-center gap-3 px-2 lg:justify-end">
-              <Button size="sm" variant="outline" onClick={closeModal}>
+              <Button size="sm" variant="outline" onClick={closeModal} disabled={isLoading}>
                 Annuler
               </Button>
               <Button size="sm" type="submit" disabled={isLoading}>

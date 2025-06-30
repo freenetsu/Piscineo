@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 // GET /api/interventions/[id] - Récupérer une intervention spécifique
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     // Vérifier l'authentification
@@ -18,7 +18,8 @@ export async function GET(
       );
     }
 
-    const interventionId = params.id;
+    // Extraire l'ID de l'intervention de manière asynchrone
+    const { id: interventionId } = context.params;
 
     // Récupérer l'intervention avec vérification que le client appartient à l'utilisateur connecté
     const intervention = await prisma.intervention.findFirst({
@@ -61,7 +62,7 @@ export async function GET(
 // PUT /api/interventions/[id] - Mettre à jour une intervention
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     // Vérifier l'authentification
@@ -73,7 +74,8 @@ export async function PUT(
       );
     }
 
-    const interventionId = params.id;
+    // Extraire l'ID de l'intervention de manière asynchrone
+    const { id: interventionId } = context.params;
     const data = await request.json();
     const { clientId, description, date, nextVisit, notes, checklist, photos, signature } = data;
 
@@ -113,7 +115,7 @@ export async function PUT(
 
     // Mettre à jour l'intervention
     const updatedIntervention = await prisma.intervention.update({
-      where: { id: params.id },
+      where: { id: interventionId },
       data: {
         clientId,
         description,
@@ -139,7 +141,7 @@ export async function PUT(
 // DELETE /api/interventions/[id] - Supprimer une intervention
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     // Vérifier l'authentification
@@ -151,7 +153,8 @@ export async function DELETE(
       );
     }
 
-    const interventionId = params.id;
+    // Extraire l'ID de l'intervention de manière asynchrone
+    const { id: interventionId } = context.params;
 
     // Vérifier que l'intervention existe et appartient à un client de l'utilisateur connecté
     const existingIntervention = await prisma.intervention.findFirst({
